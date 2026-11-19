@@ -23,3 +23,5 @@ The signed Linux image source version includes the corresponding Linux kernel so
 - Intel firmware files and microcode are distributed under the redistribution terms in the respective Debian packages. No Microsoft binaries, game code, game assets, or OptiFine are packaged in the image.
 
 The ISO is a hybrid layout with a read-only ISO9660 filesystem, a FAT EFI System Partition, and a 640 MiB ext4 data partition. The ISO and EFI boot paths share the same GRUB menu. Legacy BIOS boots from the GRUB hybrid MBR or the El Torito BIOS entry. The game session uses Xorg modesetting and Mesa's stock driver selection.
+
+The upstream [Prism license](../third-party/prism/LICENSE) and [notices](../third-party/prism/COPYING.md) accompany the ISO.

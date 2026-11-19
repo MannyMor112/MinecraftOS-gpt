@@ -1,0 +1,2 @@
+#!/bin/sh
+exec xterm -fa 'DejaVu Sans Mono' -fs 12 -geometry 74x20 -bg '#171a20' -fg '#eeeeee' -title 'Minecraft setup' -e /usr/local/lib/brick/setup

@@ -1,0 +1,21 @@
+# Operating system and hardware
+
+The target is an HP Chromebook 11 G5 (SETZER) with a dual-core Celeron N3060, a Braswell/Cherryview Gen8 Intel HD Graphics 400, approximately 3.8 GiB accessible RAM, and an Intel Wireless 7265 at PCI 8086:095a revision 59. The existing Lubuntu reports an EFI system directory, confirming the current boot is UEFI. The exact firmware build is still unknown. [MrChromebox board support](https://docs.mrchromebox.tech/docs/supported-devices.html)
+
+| Candidate | Braswell graphics | Minecraft Java 1.8.9 path | Decision |
+|---|---|---|---|
+| Debian Linux 13 | Linux i915 with Mesa Iris; Cherryview/Gen8 is included in Iris | Game’s Linux x86-64 LWJGL2, Xorg GLX and Temurin 8 | Chosen |
+| Alpine Linux | Same i915/Mesa family | Official Linux natives and the selected Java/Prism builds expect glibc; would require a glibc environment or separately verified builds | Viable with additional integration; same graphics path |
+| FreeBSD | drm-kmod i915kms and Mesa can provide hardware acceleration for this Intel generation | Mojang provides Linux, Windows and macOS natives for this version. Using FreeBSD requires validating the Linux ABI path with graphics/audio or building FreeBSD LWJGL2, then verifying Chromebook input, UEFI and audio | Interesting alternative, unverified for the complete target stack |
+| OpenBSD | inteldrm includes Intel Gen8 support | A compatible Java 8 distribution and matching LWJGL2 Linux ABI or native stack were not established | Eliminated |
+| Bespoke kernel or other OS | No complete, redistributable Braswell GL driver and compatible userspace identified | JVM and native desktop API port required | Eliminated |
+
+[Debian Mesa package](https://packages.debian.org/trixie/libgl1-mesa-dri) · [Mesa Iris device list](https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/gallium/drivers/iris/iris_screen.c) · [FreeBSD graphics handbook](https://docs.freebsd.org/en/books/handbook/x11/#x-graphic-card-drivers) · [OpenBSD inteldrm](https://man.openbsd.org/inteldrm) · [Mojang game metadata](https://piston-meta.mojang.com/mc/game/version_manifest_v2.json)
+
+The working Lubuntu/OptiFine system is the strongest compatibility evidence. Debian reuses the kernel driver, Linux native ABI and X11; uses Mesa Iris as the stock Gen8 path; and runs a single Openbox session with no compositor, panel, wallpaper process, or browser. Brick's normal launch checks that GLX reports acceleration and rejects software renderers. Actual i915 rendering on SETZER must still be checked in-game. Debian graphics updates and the reduced background workload are hypotheses for improved frame times. Software-rendered VM boots only test startup.
+
+Firmware is included for both Intel 7265 revisions, including 7265D-29 for the confirmed adapter. Xorg uses libinput, and Debian ALSA/UCM plus PulseAudio supplies the Chromebook audio path. The user can test speaker output, headphones, touchpad gestures/click, top row and backlight on the laptop. The brightness keys also have a Search/Super + minus/equals fallback. [Debian Intel wireless firmware](https://packages.debian.org/trixie/firmware-iwlwifi)
+
+Intel specifies 1.60 GHz base, up to 2.48 GHz burst, and a 6 W TDP for the N3060. Its multiplier is locked and no supported core-voltage control was found for this CPU and Chromebook firmware path. Brick uses the stock frequency/thermal controls. CPU/GPU share the fanless power and thermal budget, so governor experiments should be judged by sustained lows and temperature. No firmware change was assumed. UEFI is already working and no firmware-level FPS gain is established. [Intel N3060 specifications](https://www.intel.com/content/www/us/en/products/sku/91832/intel-celeron-processor-n3060-2m-cache-up-to-2-48-ghz/specifications.html)
+
+v1 uses Debian's kernel and mitigation defaults, the normal Linux CPU governor, 1 GiB of LZ4 zram with swappiness 80, a 384 MiB initial Java heap and 1 GiB maximum, and Java ergonomics for GC. Game defaults match the known baseline on OptiFine, Fast graphics, and six chunks. There is no experimental scheduler, voltage, frequency or kernel-parameter change. Turning mitigations off could remove defenses against CPU side channels during networked play and sign-in. It is excluded from v1.

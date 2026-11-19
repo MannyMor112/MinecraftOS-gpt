@@ -1,0 +1,12 @@
+[Unit]
+Description=Prepare Minecraft storage and compressed swap
+After=local-fs.target systemd-udev-trigger.service
+Before=getty@tty1.service NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/brick/prepare
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+fullscreen:true
+renderDistance:6
+fancyGraphics:false
+enableVsync:false
+maxFps:260
+useVbo:true
+clouds:false
+ao:0
+particles:2
+mipmapLevels:0
+viewBobbing:false
+pauseOnLostFocus:false
+difficulty:0
+fov:0.0
+gamma:0.0
+guiScale:0

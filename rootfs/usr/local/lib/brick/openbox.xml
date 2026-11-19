@@ -1,0 +1,19 @@
+<openbox_config xmlns="http://openbox.org/3.4/rc">
+  <keyboard>
+    <keybind key="A-Tab"><action name="NextWindow"/></keybind>
+    <keybind key="A-F4"><action name="Close"/></keybind>
+    <keybind key="W-minus"><action name="Execute"><command>brightnessctl -c backlight -n 5 s 10%-</command></action></keybind>
+    <keybind key="W-equal"><action name="Execute"><command>brightnessctl -c backlight -n 5 s +10%</command></action></keybind>
+    <keybind key="XF86MonBrightnessDown"><action name="Execute"><command>brightnessctl -c backlight -n 5 s 10%-</command></action></keybind>
+    <keybind key="XF86MonBrightnessUp"><action name="Execute"><command>brightnessctl -c backlight -n 5 s +10%</command></action></keybind>
+    <keybind key="XF86AudioMute"><action name="Execute"><command>pactl set-sink-mute @DEFAULT_SINK@ toggle</command></action></keybind>
+    <keybind key="XF86AudioLowerVolume"><action name="Execute"><command>pactl set-sink-volume @DEFAULT_SINK@ -5%</command></action></keybind>
+    <keybind key="XF86AudioRaiseVolume"><action name="Execute"><command>pactl set-sink-volume @DEFAULT_SINK@ +5%</command></action></keybind>
+  </keyboard>
+  <mouse>
+    <context name="Desktop"><mousebind button="Right" action="Press"><action name="ShowMenu"><menu>brick</menu></action></mousebind></context>
+    <context name="Titlebar"><mousebind button="Left" action="Press"><action name="Focus"/><action name="Raise"/></mousebind><mousebind button="Left" action="Drag"><action name="Move"/></mousebind></context>
+    <context name="Close"><mousebind button="Left" action="Click"><action name="Close"/></mousebind></context>
+  </mouse>
+  <menu><file>/usr/local/lib/brick/menu.xml</file></menu>
+</openbox_config>

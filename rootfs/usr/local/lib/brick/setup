@@ -1,0 +1,49 @@
+#!/bin/bash
+set -eu
+umask 077
+exec 9>/tmp/brick-setup.lock
+flock -n 9 || exit 0
+base=/var/lib/brick/data
+profile=$base/profile
+mode=play
+grep -qw brick.mode=benchmark /proc/cmdline && mode=benchmark
+instance=brick-$mode
+mkdir -p "$profile"
+renderer=$(LC_ALL=C glxinfo -B 2>/dev/null || true)
+export BRICK_RENDERER="$(sed -n 's/^OpenGL renderer string: //p' <<<"$renderer")"
+launch() {
+    if ! grep -qi 'Accelerated: yes' <<<"$renderer" || grep -Eqi 'llvmpipe|softpipe|swrast' <<<"$BRICK_RENDERER"; then
+        echo 'Accelerated OpenGL is required to start Minecraft.'
+        echo "Renderer: ${BRICK_RENDERER:-unavailable}"
+        return 1
+    fi
+    /usr/local/lib/brick/profile.py "$profile" "$mode" || return
+    /opt/prism/PrismLauncher -d "$profile" -l "$instance" 9>&-
+}
+if [[ "${1:-}" == --auto && -f "$profile/accounts.json" ]] && \
+    /usr/local/lib/brick/profile.py --has-account "$profile"; then
+    launch || true
+fi
+while true; do
+    printf '\nMinecraft 1.8.9 | %s\n' "$mode"
+    if [[ -e /run/brick-persistent ]]; then
+        echo 'Persistent storage is active.'
+    else
+        echo 'Temporary session. Downloads and saves disappear at shutdown.'
+    fi
+    echo '1  Connect Wi-Fi'
+    echo '2  Sign in with Microsoft'
+    echo '3  Start Minecraft'
+    echo '4  Power off'
+    read -r -p 'Choose 1–4: ' option || exit 0
+    case "$option" in
+        1) nmcli radio wifi on; nmtui-connect || true ;;
+        2) echo 'In Prism Launcher, choose Accounts > Manage Accounts > Add Microsoft.'
+           echo 'Open the displayed Microsoft link on your phone and use the code shown.'
+           echo 'Once signed in, close Prism Launcher to return here.'
+           /usr/local/lib/brick/profile.py --setup "$profile" || true
+           /opt/prism/PrismLauncher -d "$profile" 9>&- || true ;;
+        3) launch || true ;;
+        4) systemctl poweroff ;;
+    esac
+done

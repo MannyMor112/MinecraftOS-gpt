@@ -1,0 +1,47 @@
+#!/bin/bash
+set -euo pipefail
+state=/var/lib/brick
+mkdir -p "$state/data"
+chmod 0700 "$state/data"
+rm -f /run/brick-persistent
+medium=$(findmnt -nr -o SOURCE --mountpoint /run/live/medium || true)
+if [[ -z "$medium" ]]; then
+    medium=$(findmnt -nr -o SOURCE --mountpoint /lib/live/mount/medium || true)
+fi
+if [[ -b "$medium" ]]; then
+    source_disk=$(lsblk -ndo PKNAME "$medium")
+    if [[ -n "$source_disk" ]]; then
+        printf '%s\n' "/dev/$source_disk" >/run/brick-boot-disk
+    fi
+fi
+
+if grep -qw brick.mode=install /proc/cmdline; then
+    systemctl --no-block start brick-install.service
+    exit 0
+fi
+
+if [[ -n "${source_disk:-}" ]]; then
+    while read -r path label; do
+        if [[ "$label" == BRICKDATA ]] && mount -o nosuid,nodev,noatime "$path" "$state/data"; then
+            touch /run/brick-persistent
+            break
+        fi
+    done < <(lsblk -nrpo PATH,LABEL "/dev/$source_disk")
+fi
+chown player:player "$state/data"
+chmod 0700 "$state/data"
+install -d -o player -g player -m 0700 "$state/data/profile" "$state/data/results" "$state/data/cache"
+if [[ -e /run/brick-persistent ]]; then
+    install -d -m 0700 "$state/data/wifi"
+    mount --bind "$state/data/wifi" /etc/NetworkManager/system-connections
+fi
+if modprobe zram && [[ -b /dev/zram0 ]]; then
+    if grep -qw lz4 /sys/block/zram0/comp_algorithm; then
+        echo lz4 > /sys/block/zram0/comp_algorithm
+    fi
+    echo 1073741824 > /sys/block/zram0/disksize
+    mkswap /dev/zram0 >/dev/null
+    swapon -p 100 /dev/zram0
+fi
+sysctl -qw vm.swappiness=80
+printf 'Brick storage ready. Persistent USB data: %s\n' "$(test -e /run/brick-persistent && echo yes || echo no)"

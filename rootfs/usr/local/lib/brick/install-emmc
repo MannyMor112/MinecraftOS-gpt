@@ -1,0 +1,42 @@
+#!/bin/bash
+set -euo pipefail
+grep -qw brick.mode=install /proc/cmdline || exit 1
+chvt 2
+trap 'printf "\nInstaller stopped. You can power off and remove the USB.\n"; read -r -p "Press Enter to power off. " || true; systemctl poweroff' EXIT
+[[ -r /run/brick-boot-disk ]] || { echo 'Cannot identify the USB boot disk.'; exit 1; }
+read -r source </run/brick-boot-disk
+[[ "$(lsblk -dnro TRAN "$source")" == usb ]] || { echo 'Installation requires a USB boot disk.'; exit 1; }
+mapfile -t targets < <(lsblk -dnro PATH,RM,TYPE | awk '$1 ~ /^\/dev\/mmcblk[0-9]+$/ && $2 == 0 && $3 == "disk" { print $1 }')
+[[ ${#targets[@]} -eq 1 ]] || { echo 'Expected exactly one non-removable eMMC disk.'; exit 1; }
+target=${targets[0]}
+[[ "$source" != "$target" ]] || exit 1
+[[ "$(blockdev --getss "$source")" == 512 && "$(blockdev --getss "$target")" == 512 ]] || exit 1
+if lsblk -nr -o MOUNTPOINT "$target" | grep -q '[^[:space:]]'; then
+    echo 'An internal partition is mounted. Installation cancelled.'
+    exit 1
+fi
+count=$(sfdisk --json "$source" | python3 -c '
+import json,sys
+parts = json.load(sys.stdin)["partitiontable"]["partitions"]
+assert len(parts) == 3
+print(max(part["start"] + part["size"] for part in parts))
+')
+[[ "$(blockdev --getsz "$target")" -gt "$count" ]] || { echo 'Internal drive is too small.'; exit 1; }
+echo 'This will erase the entire internal drive, including Lubuntu and all saves.'
+lsblk -dn -o PATH,SIZE,MODEL "$target"
+echo 'Before continuing, boot Lubuntu and back up ~/.minecraft/saves to separate media.'
+read -r -p 'Type BACKUP COMPLETE to confirm your backup: ' confirm
+[[ "$confirm" == 'BACKUP COMPLETE' ]] || exit 0
+read -r -p "Type ERASE $target to erase and install: " confirm
+[[ "$confirm" == "ERASE $target" ]] || exit 0
+wipefs --all --force "$target"
+# Copy only the boot partitions. Initialize fresh data instead of cloning credentials.
+data_start=$(sfdisk --json "$source" | python3 -c 'import json,sys; print(json.load(sys.stdin)["partitiontable"]["partitions"][2]["start"])')
+head -c "$((data_start * 512))" "$source" | dd of="$target" bs=4M iflag=fullblock conv=fsync status=progress
+blockdev --rereadpt "$target"
+udevadm settle
+data="${target}p3"
+[[ -b "$data" ]] || exit 1
+mkfs.ext4 -F -q -L BRICKDATA -m 0 "$data"
+sync
+printf '\nInstallation finished. Remove the USB after shutdown and select the internal drive in firmware.\n'

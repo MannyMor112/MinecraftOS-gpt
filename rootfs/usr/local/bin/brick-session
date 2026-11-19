@@ -1,0 +1,13 @@
+#!/bin/bash
+set -eu
+if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+    exec dbus-run-session -- "$0"
+fi
+xset -dpms s off
+xsetroot -solid '#171a20'
+export XDG_CACHE_HOME=/var/lib/brick/data/cache
+export QT_QPA_PLATFORM=xcb
+export QT_QPA_PLATFORMTHEME=
+pulseaudio --start --exit-idle-time=-1 || true
+openbox --config-file /usr/local/lib/brick/openbox.xml &
+exec xterm -fa 'DejaVu Sans Mono' -fs 12 -geometry 74x20 -bg '#171a20' -fg '#eeeeee' -title 'Minecraft 1.8.9' -e /usr/local/lib/brick/setup --auto

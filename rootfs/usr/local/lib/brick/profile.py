@@ -51,6 +51,8 @@ def install_optifine(instance):
 def configure(profile, mode):
     initial(profile / "prismlauncher.cfg", """[General]
 Language=en_US
+ApplicationTheme=system
+IconTheme=pe_colored
 JavaPath=/opt/java/bin/java
 AutomaticJavaSwitch=false
 AutomaticJavaDownload=false

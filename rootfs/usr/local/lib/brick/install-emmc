@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 grep -qw brick.mode=install /proc/cmdline || exit 1
-chvt 2
 trap 'printf "\nInstaller stopped. You can power off and remove the USB.\n"; read -r -p "Press Enter to power off. " || true; systemctl poweroff' EXIT
 [[ -r /run/brick-boot-disk ]] || { echo 'Cannot identify the USB boot disk.'; exit 1; }
 read -r source </run/brick-boot-disk

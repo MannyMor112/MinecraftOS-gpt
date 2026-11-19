@@ -12,13 +12,21 @@ mkdir -p "$profile"
 renderer=$(LC_ALL=C glxinfo -B 2>/dev/null || true)
 export BRICK_RENDERER="$(sed -n 's/^OpenGL renderer string: //p' <<<"$renderer")"
 launch() {
+    if [[ "$mode" == benchmark && ! -e /run/brick-persistent ]]; then
+        echo 'The benchmark requires a writable BRICKDATA volume on the boot USB.'
+        return 1
+    fi
     if ! grep -qi 'Accelerated: yes' <<<"$renderer" || grep -Eqi 'llvmpipe|softpipe|swrast' <<<"$BRICK_RENDERER"; then
         echo 'Accelerated OpenGL is required to start Minecraft.'
         echo "Renderer: ${BRICK_RENDERER:-unavailable}"
         return 1
     fi
+    nm-online -q --timeout=15 || { echo 'Connect Wi-Fi with option 1 first.'; return 1; }
     /usr/local/lib/brick/profile.py "$profile" "$mode" || return
-    /opt/prism/PrismLauncher -d "$profile" -l "$instance" 9>&-
+    /opt/prism/PrismLauncher -d "$profile" -l "$instance" 9>&- >"$profile/brick-launch.log" 2>&1 || { echo "Prism failed to start. See BRICKDATA/profile/brick-launch.log."; return 1; }
+    if [[ "$mode" == benchmark ]]; then
+        echo 'Benchmark reports are in BRICKDATA/results.'
+    fi
 }
 if [[ "${1:-}" == --auto && -f "$profile/accounts.json" ]] && \
     /usr/local/lib/brick/profile.py --has-account "$profile"; then
@@ -35,14 +43,15 @@ while true; do
     echo '2  Sign in with Microsoft'
     echo '3  Start Minecraft'
     echo '4  Power off'
-    read -r -p 'Choose 1–4: ' option || exit 0
+    read -r -p 'Choose 1-4: ' option || exit 0
     case "$option" in
         1) nmcli radio wifi on; nmtui-connect || true ;;
-        2) echo 'In Prism Launcher, choose Accounts > Manage Accounts > Add Microsoft.'
+        2) echo 'Choose Add Microsoft on the Prism sign-in screen.'
            echo 'Open the displayed Microsoft link on your phone and use the code shown.'
            echo 'Once signed in, close Prism Launcher to return here.'
            /usr/local/lib/brick/profile.py --setup "$profile" || true
-           /opt/prism/PrismLauncher -d "$profile" 9>&- || true ;;
+           /opt/prism/PrismLauncher -d "$profile" 9>&- >"$profile/brick-login.log" 2>&1 ||
+               echo 'Prism sign-in closed with an error. See BRICKDATA/profile/brick-login.log.' ;;
         3) launch || true ;;
         4) systemctl poweroff ;;
     esac

@@ -35,13 +35,13 @@ if [[ -e /run/brick-persistent ]]; then
     install -d -m 0700 "$state/data/wifi"
     mount --bind "$state/data/wifi" /etc/NetworkManager/system-connections
 fi
-if modprobe zram && [[ -b /dev/zram0 ]]; then
+if modprobe zram && [[ -b /dev/zram0 ]] && [[ "$(cat /sys/block/zram0/disksize)" == 0 ]]; then
     if grep -qw lz4 /sys/block/zram0/comp_algorithm; then
-        echo lz4 > /sys/block/zram0/comp_algorithm
+        echo lz4 > /sys/block/zram0/comp_algorithm || true
     fi
-    echo 1073741824 > /sys/block/zram0/disksize
-    mkswap /dev/zram0 >/dev/null
-    swapon -p 100 /dev/zram0
+    if echo 1073741824 > /sys/block/zram0/disksize && mkswap /dev/zram0 >/dev/null; then
+        swapon -p 100 /dev/zram0 || echo "Compressed swap unavailable."
+    fi
 fi
-sysctl -qw vm.swappiness=80
+printf '80\n' >/proc/sys/vm/swappiness || true
 printf 'Brick storage ready. Persistent USB data: %s\n' "$(test -e /run/brick-persistent && echo yes || echo no)"

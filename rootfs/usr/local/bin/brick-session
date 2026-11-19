@@ -5,6 +5,7 @@ if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
 fi
 xset -dpms s off
 xsetroot -solid '#171a20'
+export LANG=C.UTF-8 LC_ALL=C.UTF-8
 export XDG_CACHE_HOME=/var/lib/brick/data/cache
 export QT_QPA_PLATFORM=xcb
 export QT_QPA_PLATFORMTHEME=

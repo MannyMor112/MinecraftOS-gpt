@@ -8,7 +8,7 @@ Stop Minecraft. In the file manager, open your home directory, press Ctrl+H to s
 
 ## Write and boot a live USB
 
-1. Download `brick-v1.iso` and `brick-v1.iso.sha256` from the same release. From that download directory, run `sha256sum -c brick-v1.iso.sha256` and confirm `brick-v1.iso: OK`.
+1. Download the matching `brick-v1.iso` and `brick-v1.iso.sha256` files. From that download directory, run `sha256sum -c brick-v1.iso.sha256` and confirm `brick-v1.iso: OK`.
 2. Before inserting the game USB, run `lsblk -dpno NAME,SIZE,MODEL,TRAN`. Insert the USB and run the same command again. Identify the newly appeared whole USB disk, such as `/dev/sdb`, by size and `usb` transport. Never select the existing internal eMMC. If uncertain, stop and send the two listings.
 3. Unmount any mounted partitions on that same USB using the file manager or `udisksctl unmount -b /dev/sdX1` (repeat for each mounted partition, using its actual path). Keep the USB connected.
 4. **The following overwrites the entire selected USB.** Replace `/dev/sdX` with the confirmed whole USB disk. Run from the download directory.

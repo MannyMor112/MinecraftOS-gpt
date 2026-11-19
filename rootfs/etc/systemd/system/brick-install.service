@@ -1,7 +1,6 @@
 [Unit]
 Description=Explicit internal eMMC installation
 After=brick-prepare.service
-Conflicts=getty@tty2.service
 
 [Service]
 Type=oneshot
@@ -9,6 +8,6 @@ ExecStart=/usr/local/lib/brick/install-emmc
 StandardInput=tty-force
 StandardOutput=tty
 StandardError=tty
-TTYPath=/dev/tty2
+TTYPath=/dev/tty1
 TTYReset=yes
 TTYVHangup=yes

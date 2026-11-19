@@ -46,6 +46,7 @@ tar -xzf /work/java.tar.gz -C "$root/opt/java" --strip-components=1
 cd /output
 mkdir classes
 (cd classes; jar xf /usr/share/java/asm.jar; find META-INF -maxdepth 1 -name MANIFEST.MF -delete; find . -name module-info.class -delete)
+cp /usr/share/doc/libasm-java/copyright classes/META-INF/ASM-COPYRIGHT
 javac --release 8 -cp /usr/share/java/asm.jar -d classes /src/bench/Benchmark.java /src/bench/Telemetry.java
 # Use the runtime Python to produce the world with a pinned implementation.
 cp /src/bench/make-world.py "$root/tmp/brick-world.py"

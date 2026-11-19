@@ -280,8 +280,8 @@ public final class Benchmark {
                 frames * 1e9 / (now - started), slowCount * 1e9 / slowSum,
                 sorted[(int) Math.ceil(frames * 0.99) - 1] / 1e6, sorted[frames - 1] / 1e6,
                 over33, over50, over100);
-        Path game = temporaryWorld.getParent().getParent();
-        report += "CPU and graphics settings\n" + Telemetry.metadata(game);
+        Path gameDirectory = temporaryWorld.getParent().getParent();
+        report += "CPU and graphics settings\n" + Telemetry.metadata(gameDirectory);
         synchronized (samples) {
             report += "\nTelemetry at ~1 Hz (thermal counts are cumulative)\n" + samples;
         }
@@ -299,6 +299,7 @@ public final class Benchmark {
         }
         Files.move(staging, output, StandardCopyOption.ATOMIC_MOVE);
         System.out.println("[Brick benchmark] Saved " + output);
+        Object game = client;
         client = null;
         // Request Minecraft's normal shutdown and world save.
         Method shutdown = game.getClass().getDeclaredMethod("m");
